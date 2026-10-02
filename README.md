@@ -207,6 +207,8 @@ E2E tests exercise the production build in isolated browser contexts on port 417
 
 GitHub Actions runs `npm ci`, lint, tests, and build on Node 24 for main-branch pushes and pull requests. A configured workflow alone does not prove a hosted run passed.
 
+Verified release results and known limitations are recorded in [FINAL_REPORT.md](FINAL_REPORT.md).
+
 ## PWA / Offline Usage
 
 The inherited VitePWA setup is improved with a coherent manifest, local assets, navigation fallback, and explicit update UI. Normal study has no remote API dependency.
