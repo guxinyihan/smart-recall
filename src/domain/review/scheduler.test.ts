@@ -5,34 +5,65 @@ import { DEFAULT_SCHEDULER } from './types';
 import type { SchedulingUnit } from './types';
 
 const now = Date.UTC(2026, 9, 2, 8);
-const fresh = () => createCard({ id: 'n', deckId: 'd', type: 'basic', front: 'Q', back: 'A' }, now).units[0];
-const mature = (): SchedulingUnit => ({ ...fresh(), state: 'review', interval: 10, repetitions: 3,
-  introducedAt: now - DAY_MS * 30, lastReviewedAt: now - DAY_MS * 10 });
+const fresh = () =>
+  createCard({ id: 'n', deckId: 'd', type: 'basic', front: 'Q', back: 'A' }, now).units[0];
+const mature = (): SchedulingUnit => ({
+  ...fresh(),
+  state: 'review',
+  interval: 10,
+  repetitions: 3,
+  introducedAt: now - DAY_MS * 30,
+  lastReviewedAt: now - DAY_MS * 10,
+});
 
 describe('SM-2-inspired scheduler', () => {
   it('graduates a first Good rating for one day using the injected clock', () => {
     const unit = fresh();
     const next = scheduleReview(unit, 'good', now);
-    expect(next).toMatchObject({ state: 'review', interval: 1, due: now + DAY_MS,
-      repetitions: 1, introducedAt: now, revision: 1, lastReviewedAt: now });
+    expect(next).toMatchObject({
+      state: 'review',
+      interval: 1,
+      due: now + DAY_MS,
+      repetitions: 1,
+      introducedAt: now,
+      revision: 1,
+      lastReviewedAt: now,
+    });
     expect(unit).toEqual(fresh());
     expect(scheduleReview(unit, 'good', now)).toEqual(next);
   });
 
   it('records an introduction even on Again, then retries after a minute', () => {
     const next = scheduleReview(fresh(), 'again', now);
-    expect(next).toMatchObject({ state: 'learning', interval: 0, due: now + 60_000,
-      introducedAt: now, repetitions: 0, lapses: 0, ease: 2.3 });
+    expect(next).toMatchObject({
+      state: 'learning',
+      interval: 0,
+      due: now + 60_000,
+      introducedAt: now,
+      repetitions: 0,
+      lapses: 0,
+      ease: 2.3,
+    });
   });
 
   it('uses a five-minute first Hard step, not a false successful graduation', () => {
-    expect(scheduleReview(fresh(), 'hard', now)).toMatchObject({ state: 'learning', interval: 0,
-      due: now + 300_000, introducedAt: now, ease: 2.35 });
+    expect(scheduleReview(fresh(), 'hard', now)).toMatchObject({
+      state: 'learning',
+      interval: 0,
+      due: now + 300_000,
+      introducedAt: now,
+      ease: 2.35,
+    });
   });
 
   it('graduates first Easy for four days and raises ease', () => {
-    expect(scheduleReview(fresh(), 'easy', now)).toMatchObject({ state: 'review', interval: 4,
-      due: now + 4 * DAY_MS, ease: 2.65, repetitions: 1 });
+    expect(scheduleReview(fresh(), 'easy', now)).toMatchObject({
+      state: 'review',
+      interval: 4,
+      due: now + 4 * DAY_MS,
+      ease: 2.65,
+      repetitions: 1,
+    });
   });
 
   it('uses the documented Good intervals 1, 6, then interval × ease', () => {
@@ -43,8 +74,13 @@ describe('SM-2-inspired scheduler', () => {
   });
 
   it('extends a mature Hard interval gently and lowers ease', () => {
-    expect(scheduleReview(mature(), 'hard', now)).toMatchObject({ interval: 12, ease: 2.35,
-      due: now + DAY_MS * 12, repetitions: 4, lapses: 0 });
+    expect(scheduleReview(mature(), 'hard', now)).toMatchObject({
+      interval: 12,
+      ease: 2.35,
+      due: now + DAY_MS * 12,
+      repetitions: 4,
+      lapses: 0,
+    });
   });
 
   it('gives mature Easy a larger interval than Good', () => {
@@ -76,14 +112,18 @@ describe('SM-2-inspired scheduler', () => {
   });
 
   it('honors a configured maximum interval', () => {
-    expect(scheduleReview(mature(), 'easy', now, { ...DEFAULT_SCHEDULER, maxIntervalDays: 20 }).interval).toBe(20);
+    expect(
+      scheduleReview(mature(), 'easy', now, { ...DEFAULT_SCHEDULER, maxIntervalDays: 20 }).interval,
+    ).toBe(20);
   });
 
   it('applies a configured initial ease on the first rating and retains existing ease later', () => {
     const options = { ...DEFAULT_SCHEDULER, initialEase: 2.8 };
     const first = scheduleReview(fresh(), 'good', now, options);
     expect(first.ease).toBe(2.8);
-    expect(scheduleReview(first, 'good', first.due, { ...options, initialEase: 2.2 }).ease).toBe(2.8);
+    expect(scheduleReview(first, 'good', first.due, { ...options, initialEase: 2.2 }).ease).toBe(
+      2.8,
+    );
     expect(scheduleReview(fresh(), 'again', now, options).ease).toBe(2.6);
   });
 
@@ -105,8 +145,16 @@ describe('SM-2-inspired scheduler', () => {
     const before = fresh();
     const after = scheduleReview(before, 'again', now);
     const event = createReviewEvent('e', before, after, 'again', now, 1400);
-    expect(event).toMatchObject({ introduced: true, previousState: 'new', nextState: 'learning',
-      previousInterval: 0, nextInterval: 0, previousDue: now, nextDue: now + 60_000, durationMs: 1400 });
+    expect(event).toMatchObject({
+      introduced: true,
+      previousState: 'new',
+      nextState: 'learning',
+      previousInterval: 0,
+      nextInterval: 0,
+      previousDue: now,
+      nextDue: now + 60_000,
+      durationMs: 1400,
+    });
     expect(Object.isFrozen(event)).toBe(true);
     const second = scheduleReview(after, 'good', after.due);
     expect(createReviewEvent('e2', after, second, 'good', after.due).introduced).toBe(false);

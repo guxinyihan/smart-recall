@@ -1,0 +1,7 @@
+# Interface brief
+
+SmartRecall serves students creating course notes and studying in libraries, classrooms and at home. The primary focus is the question/answer surface; content and clear review choices take precedence over decoration. Preserve upstream indigo (#4f46e5), with near-white (#f7f8fc) canvas, white surface, dark ink (#20243d), secondary text (#535b72), muted borders (#d8dcea), and red (#a52b39) for destructive actions. Dark theme reverses surface/ink with a lighter indigo accent.
+
+Use local system sans typography for offline reliability, 16px body, 32–36px page headings, 28–36px study question. Content left aligned except focused study content. Desktop has a 220px navigation column and bounded content; mobile has a wrapping top navigation. Decks and notes are compact rows rather than identical feature tiles. Metrics use a single definition list; study uses one central card. Spacing scale 4/8/12/16/24/32/48, 8px controls and 12px study/dialog corners. Motion limited to short answer reveal and control feedback, with reduced-motion alternative.
+
+The local UI/UX lookup returned a marketing hero/testimonials pattern even after a narrower study-app query, so it was rejected as off-topic. General guidance is used as fallback: visible labels, 44px controls, visible focus, text+color semantics, responsive lists, no remote fonts. Native dialogs provide modal focus containment, Escape and restoration. Actual desktop/tablet/mobile browser renders are required before release.

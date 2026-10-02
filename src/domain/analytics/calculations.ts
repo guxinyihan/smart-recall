@@ -2,7 +2,10 @@ import type { Card } from '../cards/types';
 import { localDayKey, queueCategory } from '../review/queue';
 import type { Rating, ReviewEvent, SchedulingUnit } from '../review/types';
 
-export interface DailyActivity { day: string; count: number }
+export interface DailyActivity {
+  day: string;
+  count: number;
+}
 export interface DeckActivity {
   deckId: string;
   reviews: number;
@@ -32,11 +35,15 @@ export function shiftDayKey(day: string, offset: number): string {
 }
 
 export function calculateAnalytics(
-  events: readonly ReviewEvent[], now: number, timeZone: string, windowDays = 30,
+  events: readonly ReviewEvent[],
+  now: number,
+  timeZone: string,
+  windowDays = 30,
 ): AnalyticsSummary {
-  if (!Number.isInteger(windowDays) || windowDays < 1 || windowDays > 366) throw new Error('Activity window must be between 1 and 366 days.');
+  if (!Number.isInteger(windowDays) || windowDays < 1 || windowDays > 366)
+    throw new Error('Activity window must be between 1 and 366 days.');
   const today = localDayKey(now, timeZone);
-  const historical = events.filter(event => event.timestamp <= now);
+  const historical = events.filter((event) => event.timestamp <= now);
   const ratingDistribution: Record<Rating, number> = { again: 0, hard: 0, good: 0, easy: 0 };
   const days = new Map<string, number>();
   const decks = new Map<string, DeckActivity>();
@@ -51,7 +58,12 @@ export function calculateAnalytics(
     ratingSum += ratingValue[event.rating];
     totalDurationMs += event.durationMs;
     if (day === today && event.introduced) introductions.add(event.unitId);
-    const deck = decks.get(event.deckId) || { deckId: event.deckId, reviews: 0, reviewsToday: 0, lastReviewedAt: 0 };
+    const deck = decks.get(event.deckId) || {
+      deckId: event.deckId,
+      reviews: 0,
+      reviewsToday: 0,
+      lastReviewedAt: 0,
+    };
     deck.reviews += 1;
     if (day === today) deck.reviewsToday += 1;
     deck.lastReviewedAt = Math.max(deck.lastReviewedAt, event.timestamp);
@@ -66,15 +78,24 @@ export function calculateAnalytics(
   }
   const totalReviews = historical.length;
   return {
-    totalReviews, reviewsToday: days.get(today) || 0, introducedToday: introductions.size,
-    ratingDistribution, averageRating: totalReviews ? ratingSum / totalReviews : null,
-    recallSuccessRate: totalReviews ? (totalReviews - ratingDistribution.again) / totalReviews * 100 : null,
-    currentStreak, totalDurationMs, averageDurationMs: totalReviews ? totalDurationMs / totalReviews : null,
+    totalReviews,
+    reviewsToday: days.get(today) || 0,
+    introducedToday: introductions.size,
+    ratingDistribution,
+    averageRating: totalReviews ? ratingSum / totalReviews : null,
+    recallSuccessRate: totalReviews
+      ? ((totalReviews - ratingDistribution.again) / totalReviews) * 100
+      : null,
+    currentStreak,
+    totalDurationMs,
+    averageDurationMs: totalReviews ? totalDurationMs / totalReviews : null,
     dailyActivity: Array.from({ length: windowDays }, (_, index) => {
       const day = shiftDayKey(today, index - windowDays + 1);
       return { day, count: days.get(day) || 0 };
     }),
-    deckActivity: [...decks.values()].sort((a, b) => b.lastReviewedAt - a.lastReviewedAt || a.deckId.localeCompare(b.deckId)),
+    deckActivity: [...decks.values()].sort(
+      (a, b) => b.lastReviewedAt - a.lastReviewedAt || a.deckId.localeCompare(b.deckId),
+    ),
   };
 }
 
@@ -91,21 +112,34 @@ export interface DeckStats {
 
 /** Note totals and scheduling-unit totals are deliberately different for reverse/cloze. */
 export function getDeckStats(
-  deckId: string, cards: readonly Card[], units: readonly SchedulingUnit[], events: readonly ReviewEvent[],
-  now: number, timeZone: string,
+  deckId: string,
+  cards: readonly Card[],
+  units: readonly SchedulingUnit[],
+  events: readonly ReviewEvent[],
+  now: number,
+  timeZone: string,
 ): DeckStats {
-  const deckCards = cards.filter(card => card.deckId === deckId);
-  const activeCards = new Set(deckCards.filter(card => !card.suspended).map(card => card.id));
-  const deckUnits = units.filter(unit => unit.deckId === deckId);
-  const activeUnits = deckUnits.filter(unit => activeCards.has(unit.cardId));
-  const due = activeUnits.filter(unit => unit.state !== 'new' && unit.due <= now);
+  const deckCards = cards.filter((card) => card.deckId === deckId);
+  const activeCards = new Set(deckCards.filter((card) => !card.suspended).map((card) => card.id));
+  const deckUnits = units.filter((unit) => unit.deckId === deckId);
+  const activeUnits = deckUnits.filter((unit) => activeCards.has(unit.cardId));
+  const due = activeUnits.filter((unit) => unit.state !== 'new' && unit.due <= now);
   const day = localDayKey(now, timeZone);
   return {
-    totalCards: deckCards.length, totalUnits: deckUnits.length, activeUnits: activeUnits.length,
-    newUnits: activeUnits.filter(unit => unit.state === 'new').length,
-    learningUnits: activeUnits.filter(unit => unit.state === 'learning' || unit.state === 'relearning').length,
+    totalCards: deckCards.length,
+    totalUnits: deckUnits.length,
+    activeUnits: activeUnits.length,
+    newUnits: activeUnits.filter((unit) => unit.state === 'new').length,
+    learningUnits: activeUnits.filter(
+      (unit) => unit.state === 'learning' || unit.state === 'relearning',
+    ).length,
     dueUnits: due.length,
-    overdueUnits: due.filter(unit => queueCategory(unit, now, timeZone) === 'overdue').length,
-    reviewsToday: events.filter(event => event.deckId === deckId && event.timestamp <= now && localDayKey(event.timestamp, timeZone) === day).length,
+    overdueUnits: due.filter((unit) => queueCategory(unit, now, timeZone) === 'overdue').length,
+    reviewsToday: events.filter(
+      (event) =>
+        event.deckId === deckId &&
+        event.timestamp <= now &&
+        localDayKey(event.timestamp, timeZone) === day,
+    ).length,
   };
 }

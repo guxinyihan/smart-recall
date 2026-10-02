@@ -8,6 +8,8 @@ interface CardFields {
   tags: string[];
   createdAt: number;
   updatedAt: number;
+  /** Monotonic edit version, independent of review-unit lifetimes. */
+  revision: number;
   suspended: boolean;
 }
 
@@ -35,7 +37,4 @@ export type CardInput = {
   id: CardId;
   deckId: string;
   tags?: string[];
-} & (
-  | { type: 'basic' | 'reverse'; front: string; back: string }
-  | { type: 'cloze'; text: string }
-);
+} & ({ type: 'basic' | 'reverse'; front: string; back: string } | { type: 'cloze'; text: string });

@@ -83,8 +83,14 @@ export function defaultSettings(timeZone = 'UTC'): ApplicationSettings {
   // Intl throws for a misspelled or unsupported zone rather than silently changing days.
   new Intl.DateTimeFormat('en-US', { timeZone }).format(0);
   return {
-    id: 'app', dailyNewLimit: 20, dailyReviewLimit: 100, timeZone,
-    theme: 'system', showShortcutHints: true, autoShowAnswer: false,
-    legacySettingsMigrated: false, scheduler: { ...DEFAULT_SCHEDULER },
+    id: 'app',
+    dailyNewLimit: 20,
+    dailyReviewLimit: 100,
+    timeZone,
+    theme: 'system',
+    showShortcutHints: true,
+    autoShowAnswer: false,
+    legacySettingsMigrated: false,
+    scheduler: { ...DEFAULT_SCHEDULER },
   };
 }
