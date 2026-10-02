@@ -11,9 +11,17 @@ export interface DailyUsage {
   reviewRemaining: number;
 }
 
+// Reusing Intl formatters avoids rebuilding an expensive formatter per historical event.
+const dayFormatters = new Map<string, Intl.DateTimeFormat>();
+
 export function localDayKey(timestamp: number, timeZone: string): string {
-  if (!Number.isFinite(timestamp)) throw new Error('Invalid timestamp.');
-  const parts = new Intl.DateTimeFormat('en-US', { timeZone, year: 'numeric', month: '2-digit', day: '2-digit' }).formatToParts(timestamp);
+  if (!Number.isFinite(timestamp) || timestamp < 0 || timestamp > 8.64e15) throw new Error('Invalid timestamp.');
+  let formatter = dayFormatters.get(timeZone);
+  if (!formatter) {
+    formatter = new Intl.DateTimeFormat('en-US', { timeZone, year: 'numeric', month: '2-digit', day: '2-digit' });
+    dayFormatters.set(timeZone, formatter);
+  }
+  const parts = formatter.formatToParts(timestamp);
   const part = (type: Intl.DateTimeFormatPartTypes) => parts.find(value => value.type === type)?.value;
   return `${part('year')}-${part('month')}-${part('day')}`;
 }

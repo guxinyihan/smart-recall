@@ -56,4 +56,8 @@ describe('cloze parsing and card directions', () => {
     expect(() => createCard({ id: 'a', deckId: 'd', type: 'basic', front: ' ', back: 'answer' }, 100)).toThrow();
     expect(() => createCard({ id: 'a', deckId: 'd', type: 'basic', front: 'question', back: '' }, 100)).toThrow();
   });
+
+  it('rejects a timestamp outside the JavaScript Date range', () => {
+    expect(() => createCard({ id: 'n', deckId: 'd', type: 'basic', front: 'Q', back: 'A' }, 1e100)).toThrow();
+  });
 });

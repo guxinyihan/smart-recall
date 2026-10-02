@@ -14,7 +14,8 @@ export function unitId(cardId: CardId, direction: SchedulingUnit['direction'], c
 }
 
 export function createCard(input: CardInput, now: number): { card: Card; units: SchedulingUnit[] } {
-  if (!Number.isFinite(now) || now < 0) throw new Error('Creation time must be a valid timestamp.');
+  if (!Number.isFinite(now) || now < 0 || now > 8.64e15) throw new Error('Creation time must be a valid timestamp.');
+  if (!['basic', 'reverse', 'cloze'].includes(input.type)) throw new Error('Unknown card type.');
   if ((typeof input.id === 'string' && !input.id.trim()) ||
     (typeof input.id === 'number' && (!Number.isSafeInteger(input.id) || input.id < 0))) throw new Error('Invalid card ID.');
   if (!input.deckId.trim()) throw new Error('Select a deck.');

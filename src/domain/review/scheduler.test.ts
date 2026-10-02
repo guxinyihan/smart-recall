@@ -79,11 +79,26 @@ describe('SM-2-inspired scheduler', () => {
     expect(scheduleReview(mature(), 'easy', now, { ...DEFAULT_SCHEDULER, maxIntervalDays: 20 }).interval).toBe(20);
   });
 
+  it('applies a configured initial ease on the first rating and retains existing ease later', () => {
+    const options = { ...DEFAULT_SCHEDULER, initialEase: 2.8 };
+    const first = scheduleReview(fresh(), 'good', now, options);
+    expect(first.ease).toBe(2.8);
+    expect(scheduleReview(first, 'good', first.due, { ...options, initialEase: 2.2 }).ease).toBe(2.8);
+    expect(scheduleReview(fresh(), 'again', now, options).ease).toBe(2.6);
+  });
+
   it('rejects nonfinite time and a clock moving before the last persisted review', () => {
     expect(() => scheduleReview(fresh(), 'good', NaN)).toThrow();
     const unit = scheduleReview(fresh(), 'good', now);
     expect(() => scheduleReview(unit, 'good', now - 1)).toThrow();
     expect(() => scheduleReview(unit, 'good', now, { ...DEFAULT_SCHEDULER, minEase: 4 })).toThrow();
+  });
+
+  it('rejects incoherent introduced state and dates beyond the JavaScript range', () => {
+    expect(() => scheduleReview({ ...fresh(), state: 'review' }, 'good', now)).toThrow();
+    expect(() => scheduleReview({ ...fresh(), repetitions: 1.5 }, 'good', now)).toThrow();
+    expect(() => scheduleReview(fresh(), 'good', 1e100)).toThrow();
+    expect(() => scheduleReview({ ...fresh(), due: 8.64e15 }, 'good', 8.64e15)).toThrow();
   });
 
   it('creates an immutable historical snapshot with first-review quota evidence', () => {
