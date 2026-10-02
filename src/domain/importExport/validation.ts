@@ -106,7 +106,10 @@ function validateUnit(value: unknown): asserts value is SchedulingUnit {
   for (const key of ['repetitions', 'lapses', 'revision']) integer(value[key], key);
   nullableTimestamp(value.introducedAt, 'introduction date');
   nullableTimestamp(value.lastReviewedAt, 'last review date');
-  if (!['forward', 'reverse', 'cloze'].includes(String(value.direction)))
+  if (
+    typeof value.direction !== 'string' ||
+    !['forward', 'reverse', 'cloze'].includes(value.direction)
+  )
     fail('Unknown review direction.');
   if (value.direction === 'cloze') {
     integer(value.clozeIndex, 'cloze index');
@@ -135,7 +138,8 @@ function validateEvent(value: unknown): asserts value is ReviewEvent {
   timestamp(value.timestamp, 'review timestamp');
   state(value.previousState);
   state(value.nextState);
-  if (!['again', 'hard', 'good', 'easy'].includes(String(value.rating))) fail('Unknown rating.');
+  if (typeof value.rating !== 'string' || !['again', 'hard', 'good', 'easy'].includes(value.rating))
+    fail('Unknown rating.');
   integer(value.previousInterval, 'previous interval');
   integer(value.nextInterval, 'next interval');
   ease(value.previousEase, 'previous ease');

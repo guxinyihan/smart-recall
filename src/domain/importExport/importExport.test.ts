@@ -232,6 +232,24 @@ describe('deterministic text and CSV import', () => {
 });
 
 describe('strict full backups and additive restores', () => {
+  it.each(['direction', 'rating'] as const)(
+    'rejects array-coerced %s fields before restoring any data',
+    async (field) => {
+      const { database } = await source();
+      const backup = parseBackup(await exportBackup(database, NOW));
+      if (field === 'direction') {
+        const reverse = backup.units.find((unit) => unit.direction === 'reverse')!;
+        Object.assign(reverse, { direction: ['reverse'] });
+      } else {
+        Object.assign(backup.events[0], { rating: ['again'] });
+      }
+      const target = await fresh();
+      await expect(previewBackup(target, JSON.stringify(backup))).rejects.toThrow('Unknown');
+      expect(await target.cards.count()).toBe(0);
+      expect(await target.units.count()).toBe(0);
+      expect(await target.events.count()).toBe(0);
+    },
+  );
   it('does not overwrite preferences when a preview promised to keep them but the destination becomes empty', async () => {
     const { database } = await source();
     const target = await fresh();
