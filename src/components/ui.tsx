@@ -51,6 +51,12 @@ export function Dialog({
   useEffect(() => {
     const dialog = ref.current;
     dialog?.showModal();
+    // React autoFocus runs before showModal; move focus after the dialog is visible.
+    dialog
+      ?.querySelector<HTMLElement>(
+        'input:not([type="hidden"]):not([type="checkbox"]):not(:disabled), textarea:not(:disabled)',
+      )
+      ?.focus();
     return () => {
       dialog?.close();
       if (trigger?.isConnected) trigger.focus();
@@ -60,6 +66,29 @@ export function Dialog({
     <dialog
       ref={ref}
       aria-labelledby={label}
+      onKeyDown={(event) => {
+        if (event.key !== 'Tab') return;
+        const controls = Array.from(
+          event.currentTarget.querySelectorAll<HTMLElement>(
+            'button, a[href], input, select, textarea, [tabindex], [contenteditable="true"]',
+          ),
+        ).filter(
+          (element) =>
+            element.tabIndex >= 0 &&
+            !element.matches(':disabled, [hidden]') &&
+            element.getClientRects().length > 0,
+        );
+        const first = controls[0];
+        const last = controls[controls.length - 1];
+        if (!first || !last) return;
+        if (event.shiftKey && document.activeElement === first) {
+          event.preventDefault();
+          last.focus();
+        } else if (!event.shiftKey && document.activeElement === last) {
+          event.preventDefault();
+          first.focus();
+        }
+      }}
       onCancel={(event) => {
         event.preventDefault();
         onClose();
